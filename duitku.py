@@ -143,8 +143,8 @@ def index():
 @app.route('/get-payment-methods', methods=['GET'])
 def get_payment():
     try:
-        data = get_payment_methods()
-        return jsonify(data)
+        data = get_payment_methods()  # Fetch the payment methods
+        return render_template('getmethodpayment.html', payment_methods=data.get("paymentFee", []))
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

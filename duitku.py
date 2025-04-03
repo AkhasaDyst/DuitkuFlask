@@ -164,8 +164,12 @@ def return_page():
         data = check_transaction_status(merchantOrderId)
         print(f"Received data from check_transaction_status: {data}")
         if resultCode == "00":
-            message = f"Payment with Merchant Order Id {merchantOrderId} is SUCCESS"
-            status_class = "success"
+            if data.get("statusCode") == "00":
+                message = f"Payment with Merchant Order Id {merchantOrderId} is SUCCESS"
+                status_class = "success"
+            else:
+                message = f"Payment with Merchant Order Id {merchantOrderId} is FORCE TO BE SUCCESS"
+                status_class = "pending"
         elif resultCode == "01":
             message = f"Payment with Merchant Order Id {merchantOrderId} is PENDING"
             status_class = "pending"

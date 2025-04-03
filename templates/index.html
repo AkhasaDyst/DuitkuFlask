@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duitku Payment Gateway</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+        h1 {
+            color: #007bff;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Duitku Payment Gateway</h1>
+    <p>Click the button below to request a transaction.</p>
+    
+    <button onclick="requestTransaction()">Request Payment</button>
+
+    <div class="result" id="paymentResult"></div>
+</div>
+
+<script>
+    function requestTransaction() {
+        fetch('/request-transaction', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            redirect: 'follow'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.paymentUrl) {
+                document.getElementById("paymentResult").innerHTML = 
+                    `<p>Transaction Created!</p>
+                     <p>Reference: ${data.reference}</p>
+                     <a href="${data.paymentUrl}" target="_blank">
+                         <button style="background-color: #007bff;">Pay Now</button>
+                     </a>`;
+            } else {
+                document.getElementById("paymentResult").innerHTML = 
+                    `<p style="color:red;">Error: ${data.error}</p>`;
+            }
+        })
+        .catch(error => {
+            document.getElementById("paymentResult").innerHTML = 
+                `<p style="color:red;">Request failed: ${error}</p>`;
+        });
+    }
+</script>
+
+</body>
+</html>

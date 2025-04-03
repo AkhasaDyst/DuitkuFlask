@@ -1,9 +1,11 @@
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request, redirect, render_template
 import requests
 import hashlib
 import datetime
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 YOUR_URL = "localhost:5000"
 
@@ -20,18 +22,18 @@ def request_transaction():
     apiKey = API_KEY
     amount = AMOUNT
     now = datetime.datetime.now()
-    merchantOrderId = merchantOrderId = str(int(now.timestamp()))  #Your Merchant Order ID
+    merchantOrderId = str(int(now.timestamp()))  #Your Merchant Order ID
     raw_signature = merchantCode + merchantOrderId + amount + apiKey
     signature = hashlib.md5(raw_signature.encode()).hexdigest()
 
-    paymentMethod = "I1"
+    paymentMethod = "I1" #Payment Method for VA BNI, change it by the payment method returned by getpaymentmethod
 
     payload = {
         "merchantCode": merchantCode,
         "paymentAmount":amount,
         "paymentMethod":paymentMethod,
         "merchantOrderId":merchantOrderId,
-        "productDetails":"Pembayaran untuk python",
+        "productDetails":"Tetsing using python",
         "additionalParam":"",
         "merchantUserInfo":"",
         "customerVaName":"John Doe",
@@ -87,7 +89,7 @@ def request_transaction():
     
     print("Response Data:", data)
     if data.get("statusCode") == "00":
-        return redirect(data.get("paymentUrl"))  # Redirect to payment URL
+        return jsonify(data)  # Redirect to payment URL
     else:
         return jsonify({"error": data.get("statusMessage", "Transaction Failed")}), 400
 
@@ -136,7 +138,7 @@ def check_transaction_status(merchantOrderId):
 
 @app.route('/')
 def index():
-    return 'Duitku Sandbox'
+    return render_template('index.html')
 
 @app.route('/get-payment-methods', methods=['GET'])
 def get_payment():
@@ -146,7 +148,7 @@ def get_payment():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/request-transaction', methods=['GET'])
+@app.route('/request-transaction', methods=['GET', 'OPTIONS'])
 def get_request():
     try:
         data = request_transaction()
@@ -162,14 +164,15 @@ def return_page():
         data = check_transaction_status(merchantOrderId)
         print(f"Received data from check_transaction_status: {data}")
         if resultCode == "00":
-            if data.get("statusCode") == "00":
-                return f"Payment with Merchant Order Id {merchantOrderId} is SUCCESS"
-            else:
-                return f"Payment with Merchant Order Id {merchantOrderId} is FORCE TO BE SUCCESS"
+            message = f"Payment with Merchant Order Id {merchantOrderId} is SUCCESS"
+            status_class = "success"
         elif resultCode == "01":
-            return f"Payment with Merchant Order Id {merchantOrderId} is PENDING"
+            message = f"Payment with Merchant Order Id {merchantOrderId} is PENDING"
+            status_class = "pending"
         else:
-            return f"Payment with Merchant Order Id {merchantOrderId} is FAILED", 400
+            message = f"Payment with Merchant Order Id {merchantOrderId} is FAILED"
+            status_class = "failed"
+        return render_template('return.html', message=message, status_class=status_class)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
